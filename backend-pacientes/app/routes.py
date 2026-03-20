@@ -31,20 +31,20 @@ def get_paciente(id: int):
             return paciente
     finally:
         conn.close()
-
-#metodo POST para crear un nuevo paciente
+# metodo POST para crear un nuevo paciente
 @router.post("/pacientes", response_model=PacienteResponse)
 def create_paciente(paciente: PacienteCreate):
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
             sql = """INSERT INTO pacientes 
-                     (nombre, apellido, fecha_nacimiento, telefono, correo, id_diagnostico)
-                     VALUES (%s, %s, %s, %s, %s, %s)"""
+                     (nombre, apellido, fecha_nacimiento, sexo, telefono, correo, id_diagnostico)
+                     VALUES (%s, %s, %s, %s, %s, %s, %s)"""
             cursor.execute(sql, (
                 paciente.nombre, paciente.apellido,
-                paciente.fecha_nacimiento, paciente.telefono,
-                paciente.correo, paciente.id_diagnostico
+                paciente.fecha_nacimiento, paciente.sexo,
+                paciente.telefono, paciente.correo,
+                paciente.id_diagnostico
             ))
             conn.commit()
             cursor.execute("SELECT * FROM pacientes WHERE id_paciente = %s", (cursor.lastrowid,))
@@ -79,5 +79,23 @@ def delete_paciente(id: int):
             cursor.execute("DELETE FROM pacientes WHERE id_paciente = %s", (id,))
             conn.commit()
             return {"mensaje": "Paciente eliminado correctamente"}
+    finally:
+        conn.close()
+        
+# metodo PATCH para actualizar parcialmente un paciente
+@router.patch("/pacientes/{id}", response_model=PacienteResponse)
+def patch_paciente(id: int, paciente: PacienteUpdate):
+    conn = get_mysql_connection()
+    try:
+        with conn.cursor() as cursor:
+            fields = {k: v for k, v in paciente.dict().items() if v is not None}
+            if not fields:
+                raise HTTPException(status_code=400, detail="No hay datos para actualizar")
+            set_clause = ", ".join([f"{k} = %s" for k in fields])
+            sql = f"UPDATE pacientes SET {set_clause} WHERE id_paciente = %s"
+            cursor.execute(sql, (*fields.values(), id))
+            conn.commit()
+            cursor.execute("SELECT * FROM pacientes WHERE id_paciente = %s", (id,))
+            return cursor.fetchone()
     finally:
         conn.close()
