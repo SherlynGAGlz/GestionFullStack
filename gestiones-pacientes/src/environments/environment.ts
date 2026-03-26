@@ -18,7 +18,7 @@ import { initializeApp } from "firebase/app";
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000',
+  apiUrl: 'https://backendpacientes-production-a8f5.up.railway.app',
   firebase: {
     apiKey: "AIzaSyAofhP1NgLuK6B8JcTtWzznNCW-4chr6VI",
     authDomain: "gestiones-3eb1d.firebaseapp.com",

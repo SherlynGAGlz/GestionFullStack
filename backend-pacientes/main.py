@@ -4,7 +4,7 @@ from app.routes import router
 
 app = FastAPI(title="API Gestión de Pacientes")
 
-# configuración de CORS para permitir solicitudes desde el frontend
+# configuration of CORS to allow requests from the frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,9 +12,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# se incluyen las rutas en app/routes.py
+# The routes are included in app/routes.py
 app.include_router(router, prefix="/api")
-# para ruta raíz para verificar que la API está funcionando
+
+# for root path to verify that the API is working
 @app.get("/")
 def root():
     return {"mensaje": "API Gestión de Pacientes funcionando"}

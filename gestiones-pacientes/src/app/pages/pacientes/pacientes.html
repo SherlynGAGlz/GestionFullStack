@@ -1,1 +1,216 @@
-<p>pacientes works!</p>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🦷</div>
+      <div>
+        <div class="brand-name">C&S DENTAL</div>
+        <div class="brand-sub">Consultorio Dental</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="vistaActiva === 'inicio'" (click)="irA('inicio')">
+        <span class="nav-icon"></span> Inicio
+      </a>
+      <a class="nav-item" [class.active]="vistaActiva === 'pacientes'" (click)="irA('pacientes')">
+        <span class="nav-icon"></span> Pacientes
+      </a>
+    </nav>
+
+    <div class="sidebar-user" *ngIf="usuario">
+      <img [src]="usuario.photoURL || 'https://ui-avatars.com/api/?name=U'"
+           class="sidebar-avatar" [alt]="usuario.displayName || ''"/>
+      <div class="sidebar-user-info">
+        <span class="sidebar-user-name">{{ usuario.displayName }}</span>
+        <span class="sidebar-user-role">Médico odontólogo registrado</span>
+      </div>
+      <button class="btn-logout" (click)="cerrarSesion()" title="Cerrar sesión">⏻</button>
+    </div>
+  </aside>
+
+  <!-- Contenido -->
+  <main class="main">
+
+    <!-- VISTA: Inicio -->
+    <div *ngIf="vistaActiva === 'inicio'" class="vista">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">B I E N V E N I D O</h1>
+          <p class="page-sub">Sistema de gestión del consultorio dental</p>
+        </div>
+      </div>
+
+      <!-- Tarjetas Firebase -->
+      <div class="info-cards" *ngIf="usuario">
+        <div class="info-card">
+          <div class="info-card-icon" style="background:#e0fbfc"></div>
+          <div>
+            <div class="info-card-label">Usuario</div>
+            <div class="info-card-value">{{ usuario.displayName }}</div>
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon" style="background:#e0fbfc"></div>
+          <div>
+            <div class="info-card-label">Correo</div>
+            <div class="info-card-value">{{ usuario.email }}</div>
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon" style="background:#e0fbfc"></div>
+          <div>
+            <div class="info-card-label">Verificado</div>
+            <div class="info-card-value">{{ usuario.emailVerified ? 'Sí' : 'No' }}</div>
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon" style="background:#e0fbfc"></div>
+          <div>
+            <div class="info-card-label">UID</div>
+            <div class="info-card-value uid-text">{{ usuario.uid }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acceso rápido -->
+      <div class="quick-card">
+        <div class="quick-card-info">
+          <div class="quick-card-title">Pacientes</div>
+          <div class="quick-card-sub">Ver historial y consultas</div>
+        </div>
+        <button class="btn-primary" (click)="irA('pacientes')">Ver pacientes</button>
+      </div>
+    </div>
+
+    <!-- VISTA: Lista de Pacientes -->
+    <div *ngIf="vistaActiva === 'pacientes' && !pacienteSeleccionado" class="vista">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Pacientes</h1>
+          <p class="page-sub">{{ pacientesFiltrados.length }} resultado(s) encontrado(s)</p>
+        </div>
+      </div>
+
+      <!-- Buscador -->
+      <div class="search-bar">
+        <input type="text" [(ngModel)]="busqueda" (input)="filtrarPacientes()"
+               placeholder="Buscar por nombre, apellido o correo..." class="search-input"/>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-box" *ngIf="cargandoPacientes">
+        <span>Cargando pacientes...</span>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-card" *ngIf="!cargandoPacientes">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Paciente</th>
+              <th>Correo</th>
+              <th>Teléfono</th>
+              <th>Fecha Nac.</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of pacientesFiltrados; let i = index" class="table-row">
+              <td class="td-num">{{ i + 1 }}</td>
+              <td>
+                <div class="paciente-cell">
+                  <div class="avatar-circle">{{ iniciales(p.nombre, p.apellido) }}</div>
+                  <div>
+                    <div class="paciente-nombre">{{ p.nombre }} {{ p.apellido }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="td-muted">{{ p.correo }}</td>
+              <td class="td-muted">{{ p.telefono }}</td>
+              <td class="td-muted">{{ p.fecha_nacimiento }}</td>
+              <td>
+                <button class="btn-ver" (click)="verPaciente(p)">Ver consultas</button>
+              </td>
+            </tr>
+            <tr *ngIf="pacientesFiltrados.length === 0">
+              <td colspan="6" class="empty-row">No hay pacientes registrados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VISTA: Perfil del Paciente + Consultas -->
+    <div *ngIf="vistaActiva === 'pacientes' && pacienteSeleccionado" class="vista">
+      <div class="page-header">
+        <div>
+          <button class="btn-back" (click)="volverALista()">Volver</button>
+          <h1 class="page-title" style="margin-top:0.5rem">
+            {{ pacienteSeleccionado.nombre }} {{ pacienteSeleccionado.apellido }}
+          </h1>
+          <p class="page-sub">Perfil del paciente y historial de consultas</p>
+        </div>
+      </div>
+
+      <!-- Tarjeta perfil -->
+      <div class="perfil-card">
+        <div class="perfil-avatar">
+          {{ iniciales(pacienteSeleccionado.nombre, pacienteSeleccionado.apellido) }}
+        </div>
+        <div class="perfil-datos">
+          <div class="perfil-item">
+            <span class="perfil-label">Nombre completo</span>
+            <span class="perfil-value">{{ pacienteSeleccionado.nombre }} {{ pacienteSeleccionado.apellido }}</span>
+          </div>
+          <div class="perfil-item">
+            <span class="perfil-label">Correo</span>
+            <span class="perfil-value">{{ pacienteSeleccionado.correo }}</span>
+          </div>
+          <div class="perfil-item">
+            <span class="perfil-label">Teléfono</span>
+            <span class="perfil-value">{{ pacienteSeleccionado.telefono }}</span>
+          </div>
+          <div class="perfil-item">
+            <span class="perfil-label">Fecha de nacimiento</span>
+            <span class="perfil-value">{{ pacienteSeleccionado.fecha_nacimiento }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Consultas -->
+      <div class="section-title">Historial de consultas</div>
+
+      <div class="loading-box" *ngIf="cargandoConsultas">Cargando consultas...</div>
+
+      <div *ngIf="!cargandoConsultas">
+        <div *ngIf="consultas.length === 0" class="empty-consultas">
+          Este paciente no tiene consultas registradas.
+        </div>
+        <div class="consulta-card" *ngFor="let c of consultas">
+          <div class="consulta-header">
+            <span class="consulta-fecha">{{ c.fecha_consulta }}</span>
+            <span class="consulta-id">Consulta #{{ c.id_consulta }}</span>
+          </div>
+          <div class="consulta-body">
+            <div class="consulta-item">
+              <span class="consulta-label">Motivo</span>
+              <span class="consulta-value">{{ c.motivo }}</span>
+            </div>
+            <div class="consulta-item">
+              <span class="consulta-label">Diagnóstico</span>
+              <span class="consulta-value">{{ c.diagnostico }}</span>
+            </div>
+            <div class="consulta-item">
+              <span class="consulta-label">Tratamiento</span>
+              <span class="consulta-value">{{ c.tratamiento }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
