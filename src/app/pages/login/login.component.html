@@ -1,0 +1,11 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-icon">🦷</div>
+    <h1>C&S Dental</h1>
+    <p>Sistema de administración médica dental</p>
+    <button (click)="loginConGoogle()" class="btn-google">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google"/>
+      Iniciar sesión
+    </button>
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </div>
